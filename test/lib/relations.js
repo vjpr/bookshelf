@@ -251,14 +251,20 @@ module.exports = function(Bookshelf, handler) {
         .then(handler(ok), ok);
     });
 
-    it('handles morphsTo', function(ok) {
+    it('handles morphTo', function(ok) {
       new Photo({id: 1})
         .imageable()
         .fetch()
         .then(handler(ok), ok);
     });
 
+    it('eager loads morphMany', function(ok) {
+      new Sites().fetch({withRelated: ['photos']}).then(handler(ok), ok);
+    });
 
+    it('eager loads morphTo', function(ok) {
+      new Photos().fetch({withRelated: ['imageable']}).then(handler(ok), ok);
+    });
 
 
   });

@@ -22,7 +22,7 @@ module.exports = function(Bookshelf) {
         table.increments('id');
         table.string('url');
         table.string('caption');
-        table.string('imageable_id');
+        table.integer('imageable_id');
         table.string('imageable_type');
       }),
 

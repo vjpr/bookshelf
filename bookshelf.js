@@ -198,7 +198,7 @@
 
     // Defines the opposite end of a `morphOne` or `morphMany` relationship, where
     // the alternate end of the polymorphic model is defined.
-    morphsTo: function(name) {
+    morphTo: function(name) {
       var foreignTable = this.get(name + '_type');
       var Target = _.find(_.rest(arguments), function(Candidate) {
         return (_.result(Candidate, 'tableName') === foreignTable);
@@ -207,7 +207,7 @@
         throw new Error('The target polymorphic model was not found');
       }
       return this._relatesTo(Target, {
-        type: 'morphsTo',
+        type: 'morphTo',
         foreignKey: Target.prototype.idAttribute,
         otherKey: name + '_id'
       });
@@ -409,7 +409,7 @@
       var target, data;
       var type = options.type;
       var multi = (type === 'hasMany' || type === 'belongsToMany' || type === 'morphMany');
-      var single = (type === 'belongsTo' || type === 'morphsTo');
+      var single = (type === 'belongsTo' || type === 'morphTo');
 
       if (!multi) {
         data = {};
@@ -645,7 +645,7 @@
         } else {
           // If this is a hasOne or belongsTo, we only choose a single item from
           // the relation.
-          if (type === 'hasOne' || type === 'belongsTo') {
+          if (type === 'hasOne' || type === 'morphOne' || type === 'belongsTo' || type  === 'morphTo') {
             parent.relations[name] = relation.models[0] || new relation._relation.modelCtor();
           } else {
             parent.relations[name] = new relation._relation.collectionCtor(relation.models, {parse: true});
@@ -668,10 +668,10 @@
   var eagerRelated = function(type, target, eager, id) {
     var relation = target._relation;
     var where = {};
-    if (type === 'hasOne' || type === 'belongsTo') {
+    if (type === 'hasOne' || type === 'belongsTo' || type === 'morphOne' || type === 'morphTo') {
       where[relation.foreignKey] = id;
       return eager.findWhere(where) || new relation.modelCtor();
-    } else if (type === 'hasMany') {
+    } else if (type === 'hasMany' || type === 'morphMany') {
       where[relation.foreignKey] = id;
       return new relation.collectionCtor(eager.where(where), {parse: true});
     } else {
@@ -691,9 +691,8 @@
       builder.whereIn(relation.foreignKey, _.uniq(_.pluck(resp, relation.parentIdAttr)));
     } else if (target instanceof Collection) {
       builder.where(relation.foreignKey, relation.fkValue);
-      // If this is a "morphOne" or "morphMany" we also need to constrain on the morph key.
-      if (relation.type === 'morphMany') builder.where(relation.morphKey, relation.morphValue);
     }
+    if (relation.type === 'morphMany') builder.where(relation.morphKey, relation.morphValue);
   };
 
   // Helper function for adding the constraints needed on a eager load.

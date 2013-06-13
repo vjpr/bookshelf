@@ -137,7 +137,7 @@ module.exports = function(Shelf) {
   var Photo = Shelf.Model.extend({
     tableName: 'photos',
     imageable: function() {
-      return this.morphsTo('imageable', Site, Author);
+      return this.morphTo('imageable', Site, Author);
     }
   });
 
