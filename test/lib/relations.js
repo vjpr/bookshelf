@@ -71,28 +71,6 @@ module.exports = function(Bookshelf, handler) {
           .then(handler(ok), ok);
       });
 
-      it('handles morphOne', function(ok) {
-        new Author({id: 1})
-          .photo()
-          .then(handler(ok), ok);
-      });
-
-      it('handles morphMany', function(ok) {
-        new Site({id: 1})
-          .photos()
-          .fetch()
-          .then(handler(ok), ok);
-      });
-
-      it('handles morphsTo', function() {
-        new Photos({id: 1})
-          .imageable()
-          .fetch()
-          .then(function() {
-
-          });
-      });
-
     });
 
     describe('Eager Loading - Models', function() {
@@ -254,6 +232,35 @@ module.exports = function(Bookshelf, handler) {
       });
 
     });
+
+  });
+
+  describe('Polymorphic associations', function() {
+
+    it('handles morphOne', function(ok) {
+      new Author({id: 1})
+        .photo()
+        .fetch()
+        .then(handler(ok), ok);
+    });
+
+    it('handles morphMany', function(ok) {
+      new Site({id: 1})
+        .photos()
+        .query('debug')
+        .fetch()
+        .then(handler(ok), ok);
+    });
+
+    // it('handles morphsTo', function() {
+    //   new Photos({id: 1})
+    //     .imageable()
+    //     .fetch()
+    //     .then(function() {
+
+    //     });
+    // });
+
 
   });
 

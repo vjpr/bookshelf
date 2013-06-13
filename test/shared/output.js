@@ -176,18 +176,18 @@ module.exports = {
     },
     'relations.3': {
       mysql: {
-        id: 1,
         site_id: 1,
+        id: 1,
         description: 'This is a description for the Knexjs Site'
       },
       postgres: {
-        id: 1,
         site_id: 1,
+        id: 1,
         description: 'This is a description for the Knexjs Site'
       },
       sqlite3: {
-        id: 1,
         site_id: 1,
+        id: 1,
         description: 'This is a description for the Knexjs Site'
       }
     },
@@ -1614,6 +1614,70 @@ module.exports = {
             name: 'bookshelfjs.org'
           }
         }]
+      }]
+    },
+    'relations.19': {
+      mysql: {
+        imageable_id: '1',
+        imageable_type: 'authors',
+        id: 1,
+        url: 'https://www.google.com/images/srpr/logo4w.png',
+        caption: 'Lorem ipsum Quis Ut eu nostrud ea sint aute non aliqua ut ullamco cupidatat exercitation nisi nisi.'
+      },
+      postgres: {
+        imageable_id: '1',
+        imageable_type: 'authors',
+        id: 1,
+        url: 'https://www.google.com/images/srpr/logo4w.png',
+        caption: 'Lorem ipsum Quis Ut eu nostrud ea sint aute non aliqua ut ullamco cupidatat exercitation nisi nisi.'
+      },
+      sqlite3: {
+        imageable_id: '1',
+        imageable_type: 'authors',
+        id: 1,
+        url: 'https://www.google.com/images/srpr/logo4w.png',
+        caption: 'Lorem ipsum Quis Ut eu nostrud ea sint aute non aliqua ut ullamco cupidatat exercitation nisi nisi.'
+      }
+    },
+    'relations.20': {
+      mysql: [{
+        id: 3,
+        url: 'https://www.google.com/images/srpr/logo4w.png',
+        caption: 'Lorem ipsum Quis Ut eu nostrud ea sint aute non aliqua ut ullamco cupidatat exercitation nisi nisi.',
+        imageable_id: '1',
+        imageable_type: 'sites'
+      },{
+        id: 4,
+        url: 'https://www.google.com/images/srpr/logo4w.png',
+        caption: 'Lorem ipsum Quis Ut eu nostrud ea sint aute non aliqua ut ullamco cupidatat exercitation nisi nisi.',
+        imageable_id: '1',
+        imageable_type: 'sites'
+      }],
+      postgres: [{
+        id: 3,
+        url: 'https://www.google.com/images/srpr/logo4w.png',
+        caption: 'Lorem ipsum Quis Ut eu nostrud ea sint aute non aliqua ut ullamco cupidatat exercitation nisi nisi.',
+        imageable_id: '1',
+        imageable_type: 'sites'
+      },{
+        id: 4,
+        url: 'https://www.google.com/images/srpr/logo4w.png',
+        caption: 'Lorem ipsum Quis Ut eu nostrud ea sint aute non aliqua ut ullamco cupidatat exercitation nisi nisi.',
+        imageable_id: '1',
+        imageable_type: 'sites'
+      }],
+      sqlite3: [{
+        id: 3,
+        url: 'https://www.google.com/images/srpr/logo4w.png',
+        caption: 'Lorem ipsum Quis Ut eu nostrud ea sint aute non aliqua ut ullamco cupidatat exercitation nisi nisi.',
+        imageable_id: '1',
+        imageable_type: 'sites'
+      },{
+        id: 4,
+        url: 'https://www.google.com/images/srpr/logo4w.png',
+        caption: 'Lorem ipsum Quis Ut eu nostrud ea sint aute non aliqua ut ullamco cupidatat exercitation nisi nisi.',
+        imageable_id: '1',
+        imageable_type: 'sites'
       }]
     }
   }

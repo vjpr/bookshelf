@@ -16,7 +16,7 @@ module.exports = function(Shelf) {
       name: 'Your Cool Site'
     },
     photos: function() {
-      return this.morphMany(Photo);
+      return this.morphMany(Photo, 'imageable');
     },
     authors: function() {
       return this.hasMany(Author);
@@ -50,7 +50,7 @@ module.exports = function(Shelf) {
   var Author = Shelf.Model.extend({
     tableName: 'authors',
     photo: function() {
-      return this.morphOne(Photo);
+      return this.morphOne(Photo, 'imageable');
     },
     site: function() {
       return this.belongsTo(Site);

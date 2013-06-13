@@ -381,12 +381,13 @@
 
     // Helper for setting up the `morphOne` or `morphMany` relations.
     _morphOneOrMany: function(Target, name, type) {
+      if (!name) throw new Error('The polymorphic `name` is required.');
       return this._relatesTo(Target, {
         type: type,
         name: name,
         foreignKey: name + '_id',
         morphKey: name + '_type',
-        morphValue: _.result(this, 'tableName') + '_' + name
+        morphValue: _.result(this, 'tableName')
       });
     },
 
@@ -398,7 +399,6 @@
       var target, data;
       var type = options.type;
       var multi = (type === 'hasMany' || type === 'belongsToMany' || type === 'morphMany');
-
       if (!multi) {
         data = {};
         if (!Target.prototype instanceof Model) {
@@ -678,11 +678,9 @@
     if (resp) {
       builder.whereIn(relation.foreignKey, _.uniq(_.pluck(resp, relation.parentIdAttr)));
     } else if (target instanceof Collection) {
-      builder.where(relation.foreignKey, '=', relation.fkValue);
-    }
-    // If this is a "morphOne" or "morphMany" we also need to constrain on the morph key.
-    if (relation.type === 'morphOne' || relation.type === 'morphMany') {
-      builder.where(relation.morphKey, relation.morphValue);
+      builder.where(relation.foreignKey, relation.fkValue);
+      // If this is a "morphOne" or "morphMany" we also need to constrain on the morph key.
+      if (relation.type === 'morphMany') builder.where(relation.morphKey, relation.morphValue);
     }
   };
 

@@ -136,6 +136,38 @@ module.exports = function(Bookshelf) {
       name: '(blank)',
       email: 'test@example.com',
       comment: 'this is neat.'
+    }]),
+
+    Knex('photos').insert([{
+      caption: 'Lorem ipsum Quis Ut eu nostrud ea sint aute non aliqua ut ullamco cupidatat exercitation nisi nisi.',
+      url: 'https://www.google.com/images/srpr/logo4w.png',
+      imageable_id: 1,
+      imageable_type: 'authors'
+    }, {
+      caption: 'Lorem ipsum Quis Ut eu nostrud ea sint aute non aliqua ut ullamco cupidatat exercitation nisi nisi.',
+      url: 'https://www.google.com/images/srpr/logo4w.png',
+      imageable_id: 2,
+      imageable_type: 'authors'
+    }, {
+      caption: 'Lorem ipsum Quis Ut eu nostrud ea sint aute non aliqua ut ullamco cupidatat exercitation nisi nisi.',
+      url: 'https://www.google.com/images/srpr/logo4w.png',
+      imageable_id: 1,
+      imageable_type: 'sites'
+    }, {
+      caption: 'Lorem ipsum Quis Ut eu nostrud ea sint aute non aliqua ut ullamco cupidatat exercitation nisi nisi.',
+      url: 'https://www.google.com/images/srpr/logo4w.png',
+      imageable_id: 1,
+      imageable_type: 'sites'
+    }, {
+      caption: 'Lorem ipsum Quis Ut eu nostrud ea sint aute non aliqua ut ullamco cupidatat exercitation nisi nisi.',
+      url: 'https://www.google.com/images/srpr/logo4w.png',
+      imageable_id: 2,
+      imageable_type: 'sites'
+    }, {
+      caption: 'Lorem ipsum Quis Ut eu nostrud ea sint aute non aliqua ut ullamco cupidatat exercitation nisi nisi.',
+      url: 'https://www.google.com/images/srpr/logo4w.png',
+      imageable_id: 2,
+      imageable_type: 'sites'
     }])
 
   ]);
