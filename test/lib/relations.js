@@ -17,6 +17,7 @@ module.exports = function(Bookshelf, handler) {
   var Post     = Models.Post;
   var Comment  = Models.Comment;
   var Tag      = Models.Tag;
+  var Photo    = Models.Tag;
 
   // Collections
   var Sites    = Collections.Sites;
@@ -24,6 +25,7 @@ module.exports = function(Bookshelf, handler) {
   var Blogs    = Collections.Blogs;
   var Posts    = Collections.Posts;
   var Comments = Collections.Comment;
+  var Photos   = Collections.Photos;
 
   describe('Bookshelf Relations', function() {
 
@@ -67,6 +69,28 @@ module.exports = function(Bookshelf, handler) {
           .posts()
           .fetch()
           .then(handler(ok), ok);
+      });
+
+      it('handles morphOne', function(ok) {
+        new Author({id: 1})
+          .photo()
+          .then(handler(ok), ok);
+      });
+
+      it('handles morphMany', function(ok) {
+        new Site({id: 1})
+          .photos()
+          .fetch()
+          .then(handler(ok), ok);
+      });
+
+      it('handles morphsTo', function() {
+        new Photos({id: 1})
+          .imageable()
+          .fetch()
+          .then(function() {
+
+          });
       });
 
     });

@@ -15,11 +15,14 @@ module.exports = function(Shelf) {
     defaults: {
       name: 'Your Cool Site'
     },
+    photos: function() {
+      return this.morphMany(Photo);
+    },
     authors: function() {
       return this.hasMany(Author);
     },
-    blogs: function() { 
-      return this.hasMany(Blog); 
+    blogs: function() {
+      return this.hasMany(Blog);
     },
     meta: function() {
       return this.hasOne(SiteMeta);
@@ -46,14 +49,17 @@ module.exports = function(Shelf) {
   // Author of a blog post.
   var Author = Shelf.Model.extend({
     tableName: 'authors',
-    site: function() { 
-      return this.belongsTo(Site); 
+    photo: function() {
+      return this.morphOne(Photo);
     },
-    posts: function() { 
-      return this.belongsToMany(Post); 
+    site: function() {
+      return this.belongsTo(Site);
     },
-    ownPosts: function() { 
-      return this.hasMany(Post, 'owner_id'); 
+    posts: function() {
+      return this.belongsToMany(Post);
+    },
+    ownPosts: function() {
+      return this.hasMany(Post, 'owner_id');
     }
   });
 
@@ -64,7 +70,7 @@ module.exports = function(Shelf) {
       title: ''
     },
     site: function() {
-      return this.belongsTo(Site); 
+      return this.belongsTo(Site);
     },
     posts: function() {
       return this.hasMany(Post);
@@ -88,17 +94,17 @@ module.exports = function(Shelf) {
       published: false
     },
     hasTimestamps: true,
-    blog: function() { 
-      return this.belongsTo(Blog); 
+    blog: function() {
+      return this.belongsTo(Blog);
     },
-    authors: function() { 
+    authors: function() {
       return this.belongsToMany(Author);
     },
-    tags: function() { 
-      return this.belongsToMany(Tag); 
+    tags: function() {
+      return this.belongsToMany(Tag);
     },
-    comments: function() { 
-      return this.hasMany(Comment); 
+    comments: function() {
+      return this.hasMany(Comment);
     }
   });
 
@@ -123,9 +129,20 @@ module.exports = function(Shelf) {
 
   var Tag = Shelf.Model.extend({
     tableName: 'tags',
-    posts: function() { 
-      return this.belongsToMany(Post); 
+    posts: function() {
+      return this.belongsToMany(Post);
     }
+  });
+
+  var Photo = Shelf.Model.extend({
+    tableName: 'photos',
+    imageable: function() {
+      return this.morphsTo('imageable', Site, Author);
+    }
+  });
+
+  var Photos = Shelf.Collection.extend({
+    model: Photo
   });
 
   return {
@@ -137,14 +154,16 @@ module.exports = function(Shelf) {
       Blog: Blog,
       Post: Post,
       Comment: Comment,
-      Tag: Tag
+      Tag: Tag,
+      Photo: Photo
     },
     Collections: {
       Sites: Sites,
       Admins: Admins,
       Posts: Posts,
       Blogs: Blogs,
-      Comments: Comments
+      Comments: Comments,
+      Photos: Photos
     }
   };
 

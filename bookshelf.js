@@ -148,10 +148,7 @@
     // to be the singular of this object's `tableName` with an `_id` suffix, but a custom `foreignKey`
     // attribute may also be specified.
     hasOne: function(Target, foreignKey) {
-      return this._relatesTo(Target, {
-        type: 'hasOne',
-        foreignKey: foreignKey || singularMemo(_.result(this, 'tableName')) + '_id'
-      });
+      return this._hasOneOrMany(Target, foreignKey, 'hasOne');
     },
 
     // The `hasMany` relation specifies that this object has one or
@@ -159,10 +156,7 @@
     // to be the singular of this object's `tableName` with an `_id` suffix, but a custom `foreignKey`
     // attribute may also be specified.
     hasMany: function(Target, foreignKey) {
-      return this._relatesTo(Target, {
-        type: 'hasMany',
-        foreignKey: foreignKey || singularMemo(_.result(this, 'tableName')) + '_id'
-      });
+      return this._hasOneOrMany(Target, foreignKey, 'hasMany');
     },
 
     // A reverse `hasOne` relation, the `belongsTo`, where the specified key in this table
@@ -188,6 +182,25 @@
           _.result(Target.prototype, 'tableName')
         ].sort().join('_')
       });
+    },
+
+    // A `morphOne` relation is a one-to-one polymorphic association from this model
+    // to another model.
+    morphOne: function(Target, name) {
+      return this._morphOneOrMany(Target, name, 'morphOne');
+    },
+
+    // A `morphMany` relation is a polymorphic many-to-one relation from this model
+    // to many of another model.
+    morphMany: function(Target, name) {
+      return this._morphOneOrMany(Target, name, 'morphMany');
+    },
+
+    // Defines the opposite end of a `morphOne` or `morphMany` relationship, where
+    // the alternate end of the polymorphic model is defined.
+    morphsTo: function(name) {
+      this._relation = {type: 'morphsTo', name: name, candidates: _.rest(arguments)};
+      return this;
     },
 
     // Similar to the standard `Backbone` set method, but without individual
@@ -358,6 +371,25 @@
       return model;
     },
 
+    // Helper for setting up the `hasOne` or `hasMany` relations.
+    _hasOneOrMany: function(Target, foreignKey, type) {
+      return this._relatesTo(Target, {
+        type: type,
+        foreignKey: foreignKey || singularMemo(_.result(this, 'tableName')) + '_id'
+      });
+    },
+
+    // Helper for setting up the `morphOne` or `morphMany` relations.
+    _morphOneOrMany: function(Target, name, type) {
+      return this._relatesTo(Target, {
+        type: type,
+        name: name,
+        foreignKey: name + '_id',
+        morphKey: name + '_type',
+        morphValue: _.result(this, 'tableName') + '_' + name
+      });
+    },
+
     // Creates a new relation, from the current object to the
     // 'target' object (collection or model), passing a hash of
     // options which can include the `type` of relation.
@@ -365,7 +397,7 @@
     _relatesTo: function(Target, options) {
       var target, data;
       var type = options.type;
-      var multi = (type === 'hasMany' || type === 'belongsToMany');
+      var multi = (type === 'hasMany' || type === 'belongsToMany' || type === 'morphMany');
 
       if (!multi) {
         data = {};
@@ -397,7 +429,10 @@
         } else {
           options.fkValue = this.id;
         }
-        if (!multi) data[options.foreignKey] = options.fkValue;
+        if (!multi) {
+          data[options.foreignKey] = options.fkValue;
+          if (options.morphKey) data[options.morphKey] = options.morphValue;
+        }
       }
 
       // Create a new instance of the `Model` or `Collection`, and set the
@@ -639,10 +674,15 @@
   // care of during model creation.
   var constraints = function(target, resp) {
     var relation = target._relation;
+    var builder  = target.query();
     if (resp) {
-      target.query('whereIn', relation.foreignKey, _.uniq(_.pluck(resp, relation.parentIdAttr)));
+      builder.whereIn(relation.foreignKey, _.uniq(_.pluck(resp, relation.parentIdAttr)));
     } else if (target instanceof Collection) {
-      target.query('where', relation.foreignKey, '=', relation.fkValue);
+      builder.where(relation.foreignKey, '=', relation.fkValue);
+    }
+    // If this is a "morphOne" or "morphMany" we also need to constrain on the morph key.
+    if (relation.type === 'morphOne' || relation.type === 'morphMany') {
+      builder.where(relation.morphKey, relation.morphValue);
     }
   };
 
