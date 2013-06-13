@@ -1679,6 +1679,20 @@ module.exports = {
         imageable_id: '1',
         imageable_type: 'sites'
       }]
+    },
+    'relations.21': {
+      mysql: {
+        id: 1,
+        name: 'knexjs.org'
+      },
+      postgres: {
+        id: 1,
+        name: 'knexjs.org'
+      },
+      sqlite3: {
+        id: 1,
+        name: 'knexjs.org'
+      }
     }
   }
 }

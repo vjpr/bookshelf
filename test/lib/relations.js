@@ -17,7 +17,7 @@ module.exports = function(Bookshelf, handler) {
   var Post     = Models.Post;
   var Comment  = Models.Comment;
   var Tag      = Models.Tag;
-  var Photo    = Models.Tag;
+  var Photo    = Models.Photo;
 
   // Collections
   var Sites    = Collections.Sites;
@@ -247,19 +247,18 @@ module.exports = function(Bookshelf, handler) {
     it('handles morphMany', function(ok) {
       new Site({id: 1})
         .photos()
-        .query('debug')
         .fetch()
         .then(handler(ok), ok);
     });
 
-    // it('handles morphsTo', function() {
-    //   new Photos({id: 1})
-    //     .imageable()
-    //     .fetch()
-    //     .then(function() {
+    it('handles morphsTo', function(ok) {
+      new Photo({id: 1})
+        .imageable()
+        .fetch()
+        .then(handler(ok), ok);
+    });
 
-    //     });
-    // });
+
 
 
   });

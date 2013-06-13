@@ -199,8 +199,18 @@
     // Defines the opposite end of a `morphOne` or `morphMany` relationship, where
     // the alternate end of the polymorphic model is defined.
     morphsTo: function(name) {
-      this._relation = {type: 'morphsTo', name: name, candidates: _.rest(arguments)};
-      return this;
+      var foreignTable = this.get(name + '_type');
+      var Target = _.find(_.rest(arguments), function(Candidate) {
+        return (_.result(Candidate, 'tableName') === foreignTable);
+      });
+      if (!Target) {
+        throw new Error('The target polymorphic model was not found');
+      }
+      return this._relatesTo(Target, {
+        type: 'morphsTo',
+        foreignKey: Target.prototype.idAttribute,
+        otherKey: name + '_id'
+      });
     },
 
     // Similar to the standard `Backbone` set method, but without individual
@@ -399,6 +409,8 @@
       var target, data;
       var type = options.type;
       var multi = (type === 'hasMany' || type === 'belongsToMany' || type === 'morphMany');
+      var single = (type === 'belongsTo' || type === 'morphsTo');
+
       if (!multi) {
         data = {};
         if (!Target.prototype instanceof Model) {
@@ -422,7 +434,7 @@
         } else {
           options.modelCtor = Target;
         }
-        options.parentIdAttr = (type === 'belongsTo' ? options.otherKey : _.result(this, 'idAttribute'));
+        options.parentIdAttr = (single ? options.otherKey : _.result(this, 'idAttribute'));
       } else {
         if (type === 'belongsTo') {
           options.fkValue = this.get(options.otherKey);
