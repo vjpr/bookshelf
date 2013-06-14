@@ -203,7 +203,7 @@
     // the alternate end of the polymorphic model is defined.
     morphTo: function(name) {
       var foreignTable = this.get(name + '_type');
-      var candidates = _.rest(arguments);
+      var candidates   = _.rest(arguments);
       var Target = _.find(candidates, function(Candidate) {
         return (_.result(Candidate, 'tableName') === foreignTable);
       });
@@ -212,6 +212,7 @@
       }
       return this._relatesTo(Target, {
         type: 'morphTo',
+        name: name,
         foreignKey: Target.prototype.idAttribute,
         otherKey: name + '_id',
         candidates: candidates
@@ -539,12 +540,6 @@
       return this.model.prototype.idAttribute;
     },
 
-    // Signifies whether the associated Model is flagged as polymorphic,
-    // required for eager `morphTo` relations.
-    polymorphic: function() {
-      return this.model.prototype.polymorphic;
-    },
-
     // Prepare a model or hash of attributes to be added to this collection.
     _prepareModel: function(attrs, options) {
       if (attrs instanceof Model) return attrs;
@@ -569,7 +564,7 @@
     // This helper function is used internally to determine which relations
     // are necessary for fetching based on the `model.load` or `withRelated` option.
     processRelated: function(options) {
-      var name, related, relation;
+      var name, related, relation, fetcher;
       var target = this.target;
       var handled = this.handled = {};
       var withRelated = options.withRelated;
@@ -613,7 +608,16 @@
       var pendingNames = this.pendingNames = [];
       for (name in handled) {
         pendingNames.push(name);
-        pendingDeferred.push(eagerFetch(handled[name], {
+
+        // If this is a `morphTo` on a collection, we will probably need to be fetching
+        // from multiple tables, so we handle this case a bit differently.
+        if (handled[name]._relation.type === 'morphTo' && this.parent instanceof Collection) {
+          fetcher = eagerMorphToFetch;
+        } else {
+          fetcher = eagerFetch;
+        }
+
+        pendingDeferred.push(fetcher(handled[name], {
           transacting: options.transacting,
           withRelated: subRelated[name]
         }));
@@ -705,6 +709,18 @@
     }).ensure(function() {
       related.resetQuery();
     });
+  };
+
+  // Handles the eager related `morphTo` association fetch, which involves multiple
+  // potential models that we're fetching for.
+  var eagerMorphToFetch = function(related, options) {
+    var type, relation = related._relation;
+    var grouped = _.groupBy(relation.parentResponse, function(item) {
+      return item[relation.name + '_type'];
+    });
+    // for (type in grouped) {
+    // }
+    return eagerFetch.apply(null, arguments);
   };
 
   // Handles the "eager related" relationship matching.
