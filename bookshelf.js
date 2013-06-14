@@ -625,17 +625,16 @@
 
       // Return a deferred handler for all of the nested object sync
       // returning the original response when these syncs are complete.
-      return when.all(pendingDeferred).spread(_.bind(this.matchResponses, this));
+      return when.all(pendingDeferred).then(_.bind(this.matchResponses, this));
     },
 
     // Handles the matching against an eager loaded relation.
     matchResponses: function() {
-      var args = _.toArray(arguments);
       var parent  = this.parent;
       var handled = this.handled;
 
       // Pair each of the query responses with the parent models.
-      for (var i = 0, l = args.length; i < l; i++) {
+      for (var i = 0, l = this.pendingNames.length; i < l; i++) {
 
         // Get the current relation this response matches up with, based
         // on the pendingNames array.
@@ -719,6 +718,7 @@
       return item[relation.name + '_type'];
     });
     // for (type in grouped) {
+    //
     // }
     return eagerFetch.apply(null, arguments);
   };
