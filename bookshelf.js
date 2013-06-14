@@ -98,10 +98,13 @@
         if (!relation.fkValue && !resp) {
           return when.reject(new Error("The " + relation.otherKey + " must be specified."));
         }
-        if (relation.type !== 'belongsToMany') {
+        if (relation.type === 'belongsToMany') {
+          belongsToManyConstraints(this, resp);
+        } else if (relation.type === 'morphTo' && resp) {
+          morphToConstraints(this, resp);
           constraints(this, resp);
         } else {
-          belongsToMany(this, resp);
+          constraints(this, resp);
         }
       }
     }
@@ -200,7 +203,8 @@
     // the alternate end of the polymorphic model is defined.
     morphTo: function(name) {
       var foreignTable = this.get(name + '_type');
-      var Target = _.find(_.rest(arguments), function(Candidate) {
+      var candidates = _.rest(arguments);
+      var Target = _.find(candidates, function(Candidate) {
         return (_.result(Candidate, 'tableName') === foreignTable);
       });
       if (!Target) {
@@ -209,7 +213,8 @@
       return this._relatesTo(Target, {
         type: 'morphTo',
         foreignKey: Target.prototype.idAttribute,
-        otherKey: name + '_id'
+        otherKey: name + '_id',
+        candidates: candidates
       });
     },
 
@@ -534,6 +539,12 @@
       return this.model.prototype.idAttribute;
     },
 
+    // Signifies whether the associated Model is flagged as polymorphic,
+    // required for eager `morphTo` relations.
+    polymorphic: function() {
+      return this.model.prototype.polymorphic;
+    },
+
     // Prepare a model or hash of attributes to be added to this collection.
     _prepareModel: function(attrs, options) {
       if (attrs instanceof Model) return attrs;
@@ -583,7 +594,7 @@
         // Internal flag to determine whether to set the ctor(s) on the _relation hash.
         target._isEager = true;
         relation = target[name]();
-        delete target['_isEager'];
+        delete target._isEager;
 
         // Set the parent's response, for purposes of setting query constraints.
         relation._relation.parentResponse = this.parentResponse;
@@ -639,8 +650,7 @@
           for (var i2 = 0, l2 = models.length; i2 < l2; i2++) {
             var m  = models[i2];
             var id = (type === 'belongsTo' ? m.get(relation._relation.otherKey) : m.id);
-            var result = eagerRelated(type, relation, relatedModels, id);
-            m.relations[name] = result;
+            m.relations[name] = eagerAssociate(type, relation, relatedModels, id);
           }
         } else {
           // If this is a hasOne or belongsTo, we only choose a single item from
@@ -664,8 +674,41 @@
   };
   _.extend(RelatedModels.prototype, _.pick(Collection.prototype, 'find', 'where', 'filter', 'findWhere'));
 
+  // Called from `EagerRelation.processRelated`, this fetches the
+  // nested related items, and returns a deferred object, with the
+  // cumulative handling of multiple (potentially nested) relations.
+  var eagerFetch = function(related, options) {
+    var models   = related.models = [];
+    var relation = related._relation;
+
+    return when(related._addConstraints(relation.parentResponse)).then(function() {
+      return related.query().select(relation.columns);
+    })
+    .then(function(resp) {
+
+      // Only find additional related items & process if
+      // there is a response from the query.
+      if (resp && resp.length > 0) {
+
+        // We can just push the models onto the collection, rather than resetting.
+        for (var i = 0, l = resp.length; i < l; i++) {
+          models.push(new relation.modelCtor(resp[i], {parse: true})._reset());
+        }
+
+        if (options.withRelated) {
+          var model = new relation.modelCtor();
+          return new EagerRelation(related, model, resp).processRelated(options);
+        }
+      }
+
+      return models;
+    }).ensure(function() {
+      related.resetQuery();
+    });
+  };
+
   // Handles the "eager related" relationship matching.
-  var eagerRelated = function(type, target, eager, id) {
+  var eagerAssociate = function(type, target, eager, id) {
     var relation = target._relation;
     var where = {};
     if (type === 'hasOne' || type === 'belongsTo' || type === 'morphOne' || type === 'morphTo') {
@@ -673,6 +716,7 @@
       return eager.findWhere(where) || new relation.modelCtor();
     } else if (type === 'hasMany' || type === 'morphMany') {
       where[relation.foreignKey] = id;
+      if (type === 'morphMany') where[relation.morphKey] = relation.morphValue;
       return new relation.collectionCtor(eager.where(where), {parse: true});
     } else {
       where['_pivot_' + relation.otherKey] = id;
@@ -696,7 +740,7 @@
   };
 
   // Helper function for adding the constraints needed on a eager load.
-  var belongsToMany = function(target, resp) {
+  var belongsToManyConstraints = function(target, resp) {
     var
     relation      = target._relation,
     columns       = relation.columns || (relation.columns = []),
@@ -730,40 +774,9 @@
     }
   };
 
-  // Called from `EagerRelation.processRelated` with the context
-  // of an eager-loading model or collection, this function
-  // fetches the nested related items, and returns a deferred object,
-  // with the cumulative handling of multiple (potentially nested) relations.
-  var eagerFetch = function(related, options) {
-
-    var models   = related.models = [];
-    var relation = related._relation;
-
-    return when(related._addConstraints(relation.parentResponse)).then(function() {
-      return related.query().select(relation.columns);
-    })
-    .then(function(resp) {
-
-      // Only find additional related items & process if
-      // there is a response from the query.
-      if (resp && resp.length > 0) {
-
-        // We can just push the models onto the collection, rather than resetting.
-        for (var i = 0, l = resp.length; i < l; i++) {
-          models.push(new relation.modelCtor(resp[i], {parse: true})._reset());
-        }
-
-        if (options.withRelated) {
-          var model = new relation.modelCtor();
-          return new EagerRelation(related, model, resp).processRelated(options);
-        }
-      }
-
-      return models;
-
-    }).ensure(function() {
-      related.resetQuery();
-    });
+  // Helper function for adding the constraints needed for a `morphTo` eager load.
+  var morphToConstraints = function(target, resp) {
+    var relation = target._relation;
   };
 
   // Set up inheritance for the model and collection.

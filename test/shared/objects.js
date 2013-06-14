@@ -136,6 +136,7 @@ module.exports = function(Shelf) {
 
   var Photo = Shelf.Model.extend({
     tableName: 'photos',
+    polymorphic: true,
     imageable: function() {
       return this.morphTo('imageable', Site, Author);
     }
