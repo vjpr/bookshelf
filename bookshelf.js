@@ -98,13 +98,10 @@
         if (!relation.fkValue && !resp) {
           return when.reject(new Error("The " + relation.otherKey + " must be specified."));
         }
-        if (relation.type === 'belongsToMany') {
-          belongsToManyConstraints(this, resp);
-        } else if (relation.type === 'morphTo' && resp) {
-          morphToConstraints(this, resp);
+        if (relation.type !== 'belongsToMany') {
           constraints(this, resp);
         } else {
-          constraints(this, resp);
+          belongsToManyConstraints(this, resp);
         }
       }
     }
@@ -213,7 +210,7 @@
       return this._relatesTo(Target, {
         type: 'morphTo',
         name: name,
-        foreignKey: Target.prototype.idAttribute,
+        foreignKey: _.result(Target.prototype, 'idAttribute'),
         otherKey: name + '_id',
         candidates: candidates
       });
@@ -610,7 +607,7 @@
         pendingNames.push(name);
 
         // If this is a `morphTo` on a collection, we will probably need to be fetching
-        // from multiple tables, so we handle this case a bit differently.
+        // from multiple tables, so we need handle this case a bit differently.
         if (handled[name]._relation.type === 'morphTo' && this.parent instanceof Collection) {
           fetcher = eagerMorphToFetch;
         } else {
@@ -641,12 +638,12 @@
         var name = this.pendingNames[i];
         var relation = handled[name];
         var type = relation._relation.type;
-        var relatedModels = new RelatedModels(relation.models);
 
         // If the parent is a collection, we need to loop over each of the
         // models and attach the appropriate sub-models, since they are
         // fetched eagerly. We will re-use the same models for each association level.
         if (parent instanceof Collection) {
+          var relatedModels = new RelatedModels(relation.models);
           var models = parent.models;
 
           // Attach the appropriate related items onto the parent model.
@@ -713,13 +710,40 @@
   // Handles the eager related `morphTo` association fetch, which involves multiple
   // potential models that we're fetching for.
   var eagerMorphToFetch = function(related, options) {
-    var type, relation = related._relation;
-    var grouped = _.groupBy(relation.parentResponse, function(item) {
-      return item[relation.name + '_type'];
-    });
+    // var morphTarget, type, relation, grouped, pendingGroups;
+    // relation = related._relation;
+    // grouped = _.groupBy(relation.parentResponse, function(item) {
+    //   return item[relation.name + '_type'];
+    // });
+    // pendingGroups = [];
+
     // for (type in grouped) {
-    //
+    //   var MorphCtor;
+    //   for (var i = 0, l = relation.candidates.length; i < l; i++) {
+    //     var Candidate = relation.candidates[i];
+    //     if (!MorphCtor && Candidate.prototype.tableName === type) {
+    //       MorphCtor = Candidate;
+    //     }
+    //   }
+
+    //   // Create the new morphTarget we're going after, with the appropriate
+    //   // modelCtor and parent
+    //   morphTarget = {
+    //     _relation: {
+    //       modelCtor: MorphCtor,
+    //       parentResponse: grouped,
+    //       name: relation.name,
+    //       foreignKey: _.result(MorphCtor.prototype, 'idAttribute'),
+    //       otherKey: name + '_id'
+    //     }
+    //   };
+
+    //   pendingGroups.push(eagerFetch(morphTarget, options));
     // }
+
+    // return when.all(pendingGroups).then(function(groups) {
+    //   console.log(groups);
+    // });
     return eagerFetch.apply(null, arguments);
   };
 
@@ -727,13 +751,15 @@
   var eagerAssociate = function(type, target, eager, id) {
     var relation = target._relation;
     var where = {};
-    if (type === 'hasOne' || type === 'belongsTo' || type === 'morphOne' || type === 'morphTo') {
+    if (type === 'hasOne' || type === 'belongsTo' || type === 'morphOne') {
       where[relation.foreignKey] = id;
       return eager.findWhere(where) || new relation.modelCtor();
     } else if (type === 'hasMany' || type === 'morphMany') {
       where[relation.foreignKey] = id;
       if (type === 'morphMany') where[relation.morphKey] = relation.morphValue;
       return new relation.collectionCtor(eager.where(where), {parse: true});
+    } else if (type === 'morphTo') {
+      return new relation.modelCtor();
     } else {
       where['_pivot_' + relation.otherKey] = id;
       return new relation.collectionCtor(eager.where(where), {parse: true});
@@ -788,11 +814,6 @@
     } else {
       builder.where(joinTableName + '.' + otherKey, '=', relation.fkValue);
     }
-  };
-
-  // Helper function for adding the constraints needed for a `morphTo` eager load.
-  var morphToConstraints = function(target, resp) {
-    var relation = target._relation;
   };
 
   // Set up inheritance for the model and collection.
